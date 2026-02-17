@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { visualizations, categoryLabels, categoryColors } from "@/data/visualizations";
 import type { VisualizationCategory } from "@/data/types";
 import Modal from "@/components/ui/Modal";
+import CardPreview from "@/components/ui/CardPreview";
 
 // Lazy-load visualization components
 const components: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
@@ -57,6 +58,69 @@ const categories: (VisualizationCategory | "all")[] = [
   "artistic",
   "executive",
 ];
+
+function VizCard({
+  viz,
+  index,
+  onClick,
+}: {
+  viz: (typeof visualizations)[number];
+  index: number;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const color = categoryColors[viz.category];
+  const Component = components[viz.id];
+
+  return (
+    <motion.button
+      key={viz.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: index * 0.02, ease: "easeOut" }}
+      whileHover={{ y: -4, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="glass glass-hover rounded-xl p-4 text-left cursor-pointer transition-colors duration-200 group w-full"
+    >
+      {/* Live preview thumbnail */}
+      {Component && (
+        <CardPreview Component={Component} hovered={hovered} />
+      )}
+
+      <div className="flex items-start justify-between mb-2">
+        <span
+          className="text-xs font-medium px-2 py-0.5 rounded-full"
+          style={{
+            backgroundColor: `${color}20`,
+            color: color,
+          }}
+        >
+          {categoryLabels[viz.category]}
+        </span>
+        <span className="text-xs text-[--color-muted]">#{index + 1}</span>
+      </div>
+      <h3 className="text-sm font-semibold text-[--color-foreground] mb-1 group-hover:text-[--color-accent] transition-colors">
+        {viz.title}
+      </h3>
+      <p className="text-xs text-[--color-muted] line-clamp-2">
+        {viz.description}
+      </p>
+      <div className="flex flex-wrap gap-1 mt-2">
+        {viz.tags.slice(0, 3).map((tag) => (
+          <span
+            key={tag}
+            className="text-[10px] px-1.5 py-0.5 rounded bg-[--color-border] text-[--color-muted]"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    </motion.button>
+  );
+}
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState<VisualizationCategory | "all">("all");
@@ -169,54 +233,14 @@ export default function Home() {
             transition={{ duration: 0.2 }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
           >
-            {filtered.map((viz, i) => {
-              const color = categoryColors[viz.category];
-              return (
-                <motion.button
-                  key={viz.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.35,
-                    delay: i * 0.02,
-                    ease: "easeOut",
-                  }}
-                  whileHover={{ y: -4, scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedViz(viz.id)}
-                  className="glass glass-hover rounded-xl p-5 text-left cursor-pointer transition-colors duration-200 group w-full"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <span
-                      className="text-xs font-medium px-2 py-0.5 rounded-full"
-                      style={{
-                        backgroundColor: `${color}20`,
-                        color: color,
-                      }}
-                    >
-                      {categoryLabels[viz.category]}
-                    </span>
-                    <span className="text-xs text-[--color-muted]">#{i + 1}</span>
-                  </div>
-                  <h3 className="text-sm font-semibold text-[--color-foreground] mb-1 group-hover:text-[--color-accent] transition-colors">
-                    {viz.title}
-                  </h3>
-                  <p className="text-xs text-[--color-muted] line-clamp-2">
-                    {viz.description}
-                  </p>
-                  <div className="flex flex-wrap gap-1 mt-3">
-                    {viz.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-[10px] px-1.5 py-0.5 rounded bg-[--color-border] text-[--color-muted]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </motion.button>
-              );
-            })}
+            {filtered.map((viz, i) => (
+              <VizCard
+                key={viz.id}
+                viz={viz}
+                index={i}
+                onClick={() => setSelectedViz(viz.id)}
+              />
+            ))}
           </motion.div>
         </AnimatePresence>
 
